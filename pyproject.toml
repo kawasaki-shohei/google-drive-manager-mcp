@@ -1,0 +1,32 @@
+[project]
+name = "google-drive-manager"
+version = "0.1.0"
+description = "Google Drive MCP server for managing files and sharing permissions on a personal Google account"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp>=1.0.0",
+    "google-api-python-client>=2.140.0",
+    "google-auth>=2.35.0",
+    "google-auth-oauthlib>=1.2.0",
+    "google-auth-httplib2>=0.2.0",
+]
+
+[project.scripts]
+google-drive-manager = "google_drive_manager.server:main"
+google-drive-manager-auth = "google_drive_manager.adapters.oauth_flow:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/google_drive_manager"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
