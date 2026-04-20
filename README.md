@@ -7,12 +7,13 @@ Google Drive を操作する Claude Code 用カスタム MCP サーバー。
 | ツール | 説明 |
 |---|---|
 | `list_files` | ファイル一覧取得（フォルダ・名前・MIMEタイプでフィルタ可） |
-| `read_file` | ファイル内容をテキストとして読み込む |
+| `read_file` | ファイル内容をテキストとして読み込む（Google Docs はプレーンテキストで自動エクスポート） |
 | `upload_file` | ローカルファイルを Drive にアップロード |
-| `upload_markdown_as_google_doc` | Markdown（ローカル画像付き）を pandoc 経由で Google Docs に変換してアップロード |
+| `upload_markdown_as_google_doc` | Markdown（ローカル画像付き）を pandoc 経由で Google Docs に変換してアップロード。アップロード後はリンクを知っている全員が編集可能な状態で公開される |
 | `create_folder` | フォルダ作成 |
 | `rename_file` | ファイル・フォルダのリネーム |
 | `delete_file` | ファイル・フォルダを完全削除 |
+| `set_public_access` | ファイルをリンクを知っている全員がアクセスできる状態にする（role: reader/commenter/writer） |
 | `list_permissions` | 共有権限の一覧取得 |
 | `share_file` | メールアドレスに共有権限を付与 |
 | `revoke_permission` | 共有権限を削除 |

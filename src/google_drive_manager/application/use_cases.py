@@ -146,16 +146,19 @@ class UploadMarkdownAsGoogleDoc:
                 parent_folder_id=request.drive_folder_id,
             )
             if existing:
-                return self._drive.update_google_doc_content(
+                result = self._drive.update_google_doc_content(
                     file_id=existing.id,
                     docx_path=docx_path,
                     title=title,
                 )
-            return self._drive.upload_as_google_doc(
-                docx_path=docx_path,
-                title=title,
-                parent_folder_id=request.drive_folder_id,
-            )
+            else:
+                result = self._drive.upload_as_google_doc(
+                    docx_path=docx_path,
+                    title=title,
+                    parent_folder_id=request.drive_folder_id,
+                )
+            self._drive.make_anyone_with_link(result.id)
+            return result
 
 
 class CreateFolder:

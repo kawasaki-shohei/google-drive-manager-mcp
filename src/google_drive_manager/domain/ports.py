@@ -77,3 +77,6 @@ class DrivePort(ABC):
         docx_path: Path,
         title: str,
     ) -> DriveFile: ...
+
+    @abstractmethod
+    def make_anyone_with_link(self, file_id: str, role: str = "writer") -> None: ...

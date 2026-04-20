@@ -138,6 +138,9 @@ class FakeDrivePort(DrivePort):
         self._files[file_id] = updated
         return updated
 
+    def make_anyone_with_link(self, file_id: str, role: str = "writer") -> None:
+        pass  # 共有状態はテストで検証不要なので no-op
+
     def find_google_doc_by_name(
         self, name: str, parent_folder_id: str | None
     ) -> DriveFile | None:

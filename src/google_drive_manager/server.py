@@ -182,6 +182,19 @@ def rename_file(file_id: str, new_name: str) -> dict[str, Any]:
 
 
 @_mcp.tool()
+def set_public_access(file_id: str, role: str = "writer") -> dict[str, str]:
+    """Make a file accessible to anyone with the link.
+
+    Args:
+        file_id: Google Drive file or folder ID.
+        role: Permission level. One of 'reader', 'commenter', 'writer' (default: writer).
+    """
+    drive = _build_drive()
+    drive.make_anyone_with_link(file_id, role=role)
+    return {"status": "public", "file_id": file_id, "role": role}
+
+
+@_mcp.tool()
 def upload_markdown_as_google_doc(
     md_path: str,
     drive_folder_id: str | None = None,

@@ -53,6 +53,11 @@ class GoogleDriveAdapter(DrivePort):
         return [_to_drive_file(f) for f in resp.get("files", [])]
 
     def read_file_bytes(self, file_id: str) -> bytes:
+        meta = self._service.files().get(fileId=file_id, fields="mimeType").execute()
+        if meta.get("mimeType") == _GOOGLE_DOC_MIME:
+            return self._service.files().export(
+                fileId=file_id, mimeType="text/plain"
+            ).execute()
         request = self._service.files().get_media(fileId=file_id)
         buffer = BytesIO()
         downloader = MediaIoBaseDownload(buffer, request)
@@ -181,6 +186,13 @@ class GoogleDriveAdapter(DrivePort):
             .execute()
         )
         return _to_drive_file(updated)
+
+    def make_anyone_with_link(self, file_id: str, role: str = "writer") -> None:
+        self._service.permissions().create(
+            fileId=file_id,
+            body={"type": "anyone", "role": role},
+            fields="id",
+        ).execute()
 
     def create_folder(self, name: str, parent_folder_id: str | None) -> DriveFile:
         body: dict[str, object] = {
