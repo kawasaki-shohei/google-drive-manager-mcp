@@ -7,7 +7,7 @@ Google Drive を操作する Claude Code 用カスタム MCP サーバー。
 | ツール | 説明 |
 |---|---|
 | `list_files` | ファイル一覧取得（フォルダ・名前・MIMEタイプでフィルタ可） |
-| `read_file` | ファイル内容をテキストとして読み込む（Google Docs はプレーンテキストで自動エクスポート） |
+| `read_file` | ファイル内容をテキストとして読み込む（Google Docs はプレーンテキスト、Google Sheets は CSV で自動エクスポート。Sheets で複数タブある場合は最初のタブのみ取得される） |
 | `upload_file` | ローカルファイルを Drive にアップロード |
 | `upload_markdown_as_google_doc` | Markdown（ローカル画像付き）を pandoc 経由で Google Docs に変換してアップロード。アップロード後はリンクを知っている全員が編集可能な状態で公開される |
 | `create_folder` | フォルダ作成 |

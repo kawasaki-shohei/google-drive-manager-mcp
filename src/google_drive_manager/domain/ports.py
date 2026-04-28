@@ -79,4 +79,25 @@ class DrivePort(ABC):
     ) -> DriveFile: ...
 
     @abstractmethod
+    def find_google_sheet_by_name(
+        self, name: str, parent_folder_id: str | None
+    ) -> DriveFile | None: ...
+
+    @abstractmethod
+    def upload_as_google_sheet(
+        self,
+        csv_path: Path,
+        title: str,
+        parent_folder_id: str | None,
+    ) -> DriveFile: ...
+
+    @abstractmethod
+    def update_google_sheet_content(
+        self,
+        file_id: str,
+        csv_path: Path,
+        title: str,
+    ) -> DriveFile: ...
+
+    @abstractmethod
     def make_anyone_with_link(self, file_id: str, role: str = "writer") -> None: ...

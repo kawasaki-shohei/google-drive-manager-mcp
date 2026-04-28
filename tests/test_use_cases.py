@@ -6,6 +6,8 @@ from google_drive_manager.application.use_cases import (
     CreateFolder,
     DeleteFile,
     ListFiles,
+    UploadCsvAsGoogleSheet,
+    UploadCsvAsGoogleSheetRequest,
     UploadMarkdownAsGoogleDoc,
     UploadMarkdownAsGoogleDocRequest,
     ListFilesRequest,
@@ -208,6 +210,52 @@ class TestUploadMarkdownAsGoogleDoc:
                 drive,
                 FakePandocConverter(raise_error="pandoc 変換失敗:\nsome error"),
             ).execute(UploadMarkdownAsGoogleDocRequest(md_path=md))
+
+
+class TestUploadCsvAsGoogleSheet:
+    def test_creates_new_google_sheet(self, tmp_path: Path):
+        csv = tmp_path / "data.csv"
+        csv.write_text("a,b\n1,2\n")
+        drive = FakeDrivePort()
+
+        result = UploadCsvAsGoogleSheet(drive).execute(
+            UploadCsvAsGoogleSheetRequest(csv_path=csv)
+        )
+        assert result.name == "data"
+        assert result.mime_type == "application/vnd.google-apps.spreadsheet"
+
+    def test_uses_sheet_title_when_specified(self, tmp_path: Path):
+        csv = tmp_path / "data.csv"
+        csv.write_text("a,b\n1,2\n")
+        drive = FakeDrivePort()
+
+        result = UploadCsvAsGoogleSheet(drive).execute(
+            UploadCsvAsGoogleSheetRequest(csv_path=csv, sheet_title="カスタムシート")
+        )
+        assert result.name == "カスタムシート"
+
+    def test_updates_existing_sheet_with_same_title(self, tmp_path: Path):
+        csv = tmp_path / "data.csv"
+        csv.write_text("a,b\n1,2\n")
+        drive = FakeDrivePort()
+        existing = drive.upload_as_google_sheet(
+            csv_path=tmp_path / "dummy.csv",
+            title="data",
+            parent_folder_id=None,
+        )
+
+        result = UploadCsvAsGoogleSheet(drive).execute(
+            UploadCsvAsGoogleSheetRequest(csv_path=csv)
+        )
+        assert result.id == existing.id
+        assert result.name == "data"
+
+    def test_raises_when_csv_missing(self, tmp_path: Path):
+        drive = FakeDrivePort()
+        with pytest.raises(FileNotFoundError):
+            UploadCsvAsGoogleSheet(drive).execute(
+                UploadCsvAsGoogleSheetRequest(csv_path=tmp_path / "none.csv")
+            )
 
 
 class TestDeleteFile:

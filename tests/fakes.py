@@ -193,6 +193,58 @@ class FakeDrivePort(DrivePort):
         self._files[file_id] = updated
         return updated
 
+    def find_google_sheet_by_name(
+        self, name: str, parent_folder_id: str | None
+    ) -> DriveFile | None:
+        for f in self._files.values():
+            if f.name == name and f.mime_type == "application/vnd.google-apps.spreadsheet":
+                if parent_folder_id is None or parent_folder_id in f.parents:
+                    return f
+        return None
+
+    def upload_as_google_sheet(
+        self,
+        csv_path: Path,
+        title: str,
+        parent_folder_id: str | None,
+    ) -> DriveFile:
+        new_id = str(uuid4())
+        file = DriveFile(
+            id=new_id,
+            name=title,
+            mime_type="application/vnd.google-apps.spreadsheet",
+            size=None,
+            parents=(parent_folder_id,) if parent_folder_id else (),
+            created_time=None,
+            modified_time=None,
+            web_view_link=f"https://docs.google.com/spreadsheets/d/{new_id}/edit",
+        )
+        self._files[new_id] = file
+        self._permissions[new_id] = []
+        return file
+
+    def update_google_sheet_content(
+        self,
+        file_id: str,
+        csv_path: Path,
+        title: str,
+    ) -> DriveFile:
+        if file_id not in self._files:
+            raise FileNotFoundError(file_id)
+        old = self._files[file_id]
+        updated = DriveFile(
+            id=old.id,
+            name=title,
+            mime_type=old.mime_type,
+            size=old.size,
+            parents=old.parents,
+            created_time=old.created_time,
+            modified_time=old.modified_time,
+            web_view_link=old.web_view_link,
+        )
+        self._files[file_id] = updated
+        return updated
+
     def create_folder(self, name: str, parent_folder_id: str | None) -> DriveFile:
         new_id = str(uuid4())
         folder = DriveFile(

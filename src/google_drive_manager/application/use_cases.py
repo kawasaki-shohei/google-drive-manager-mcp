@@ -161,6 +161,41 @@ class UploadMarkdownAsGoogleDoc:
             return result
 
 
+@dataclass(frozen=True)
+class UploadCsvAsGoogleSheetRequest:
+    csv_path: Path
+    drive_folder_id: str | None = None
+    sheet_title: str | None = None
+
+
+class UploadCsvAsGoogleSheet:
+    def __init__(self, drive: DrivePort) -> None:
+        self._drive = drive
+
+    def execute(self, request: UploadCsvAsGoogleSheetRequest) -> DriveFile:
+        if not request.csv_path.exists():
+            raise FileNotFoundError(f"CSV ファイルが見つかりません: {request.csv_path}")
+        title = request.sheet_title or request.csv_path.stem
+        existing = self._drive.find_google_sheet_by_name(
+            name=title,
+            parent_folder_id=request.drive_folder_id,
+        )
+        if existing:
+            result = self._drive.update_google_sheet_content(
+                file_id=existing.id,
+                csv_path=request.csv_path,
+                title=title,
+            )
+        else:
+            result = self._drive.upload_as_google_sheet(
+                csv_path=request.csv_path,
+                title=title,
+                parent_folder_id=request.drive_folder_id,
+            )
+        self._drive.make_anyone_with_link(result.id)
+        return result
+
+
 class CreateFolder:
     def __init__(self, drive: DrivePort) -> None:
         self._drive = drive

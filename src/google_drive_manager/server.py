@@ -19,6 +19,8 @@ from .application.use_cases import (
     ShareFileRequest,
     UploadFile,
     UploadFileRequest,
+    UploadCsvAsGoogleSheet,
+    UploadCsvAsGoogleSheetRequest,
     UploadMarkdownAsGoogleDoc,
     UploadMarkdownAsGoogleDocRequest,
 )
@@ -216,6 +218,32 @@ def upload_markdown_as_google_doc(
             md_path=Path(md_path),
             drive_folder_id=drive_folder_id,
             doc_title=doc_title,
+        )
+    )
+    return _file_to_dict(result)
+
+
+@_mcp.tool()
+def upload_csv_as_google_sheet(
+    csv_path: str,
+    drive_folder_id: str | None = None,
+    sheet_title: str | None = None,
+) -> dict[str, Any]:
+    """Upload a CSV file to Drive and convert it to a Google Sheets spreadsheet.
+
+    Existing Google Sheets with the same title in the target folder will be overwritten.
+
+    Args:
+        csv_path: Absolute path to the CSV file.
+        drive_folder_id: Destination Drive folder ID. Omit to place in Drive root.
+        sheet_title: Title for the Google Sheets file. Defaults to the CSV filename without extension.
+    """
+    drive = _build_drive()
+    result = UploadCsvAsGoogleSheet(drive).execute(
+        UploadCsvAsGoogleSheetRequest(
+            csv_path=Path(csv_path),
+            drive_folder_id=drive_folder_id,
+            sheet_title=sheet_title,
         )
     )
     return _file_to_dict(result)

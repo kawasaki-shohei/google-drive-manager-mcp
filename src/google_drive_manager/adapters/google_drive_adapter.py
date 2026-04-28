@@ -15,6 +15,8 @@ _PERMISSION_FIELDS = "id,type,role,emailAddress,displayName"
 _PERMISSIONS_LIST_FIELDS = f"permissions({_PERMISSION_FIELDS})"
 _GOOGLE_DOC_MIME = "application/vnd.google-apps.document"
 _DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+_GOOGLE_SHEET_MIME = "application/vnd.google-apps.spreadsheet"
+_CSV_MIME = "text/csv"
 
 
 class GoogleDriveAdapter(DrivePort):
@@ -54,9 +56,15 @@ class GoogleDriveAdapter(DrivePort):
 
     def read_file_bytes(self, file_id: str) -> bytes:
         meta = self._service.files().get(fileId=file_id, fields="mimeType").execute()
-        if meta.get("mimeType") == _GOOGLE_DOC_MIME:
+        mime = meta.get("mimeType")
+        if mime == _GOOGLE_DOC_MIME:
             return self._service.files().export(
                 fileId=file_id, mimeType="text/plain"
+            ).execute()
+        if mime == _GOOGLE_SHEET_MIME:
+            # Google Sheets は CSV でエクスポート (複数シートある場合は最初のシートのみ取得される)
+            return self._service.files().export(
+                fileId=file_id, mimeType="text/csv"
             ).execute()
         request = self._service.files().get_media(fileId=file_id)
         buffer = BytesIO()
@@ -175,6 +183,61 @@ class GoogleDriveAdapter(DrivePort):
         title: str,
     ) -> DriveFile:
         media = MediaFileUpload(str(docx_path), mimetype=_DOCX_MIME, resumable=False)
+        updated = (
+            self._service.files()
+            .update(
+                fileId=file_id,
+                body={"name": title},
+                media_body=media,
+                fields=_FILE_FIELDS,
+            )
+            .execute()
+        )
+        return _to_drive_file(updated)
+
+    def find_google_sheet_by_name(
+        self, name: str, parent_folder_id: str | None
+    ) -> DriveFile | None:
+        escaped = name.replace("'", "\\'")
+        q_parts = [
+            f"name = '{escaped}'",
+            f"mimeType = '{_GOOGLE_SHEET_MIME}'",
+            "trashed = false",
+        ]
+        if parent_folder_id:
+            q_parts.append(f"'{parent_folder_id}' in parents")
+        resp = (
+            self._service.files()
+            .list(q=" and ".join(q_parts), fields=f"files({_FILE_FIELDS})", pageSize=1)
+            .execute()
+        )
+        files = resp.get("files", [])
+        return _to_drive_file(files[0]) if files else None
+
+    def upload_as_google_sheet(
+        self,
+        csv_path: Path,
+        title: str,
+        parent_folder_id: str | None,
+    ) -> DriveFile:
+        body: dict[str, object] = {"name": title, "mimeType": _GOOGLE_SHEET_MIME}
+        if parent_folder_id:
+            body["parents"] = [parent_folder_id]
+        media = MediaFileUpload(str(csv_path), mimetype=_CSV_MIME, resumable=False)
+        created = (
+            self._service.files()
+            .create(body=body, media_body=media, fields=_FILE_FIELDS)
+            .execute()
+        )
+        return _to_drive_file(created)
+
+    def update_google_sheet_content(
+        self,
+        file_id: str,
+        csv_path: Path,
+        title: str,
+    ) -> DriveFile:
+        media = MediaFileUpload(str(csv_path), mimetype=_CSV_MIME, resumable=False)
         updated = (
             self._service.files()
             .update(
